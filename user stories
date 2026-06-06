@@ -1,0 +1,279 @@
+# User Stories — NBA Stats Explorer
+
+**Product:** NBA Stats Explorer  
+**Version:** 1.0  
+**Date:** June 2026  
+
+---
+
+## How to Read This Document
+
+Each story follows the format:
+
+> **As a** [persona], **I want to** [action], **so that** [outcome].
+
+Stories are grouped by feature area and ordered by priority (P0 = must have, P1 = should have, P2 = nice to have). Each story includes acceptance criteria and, where relevant, edge cases.
+
+---
+
+## Epic 1 — API Key Setup
+
+### US-001 · Enter API key
+**Priority:** P0
+
+> As a user, I want to paste my balldontlie.io API key into the app, so that I can authenticate my requests and access NBA data.
+
+**Acceptance criteria:**
+- [ ] An API key input field is visible on first load, before any data is fetched.
+- [ ] The field accepts a text string and masks it as a password field for security.
+- [ ] When a valid key is entered, the status badge changes to "connected" after the first successful API call.
+- [ ] The app never sends the key to any server other than `api.balldontlie.io`.
+
+**Edge cases:**
+- If the key is invalid, the badge shows "error" and an inline message asks the user to check the key.
+- If no key is present and a search is triggered, a prompt directs the user to add one.
+
+---
+
+### US-002 · See connection status
+**Priority:** P0
+
+> As a user, I want to see whether my API key is working, so that I can quickly diagnose connection problems without guessing.
+
+**Acceptance criteria:**
+- [ ] Status badge shows one of three states: "not set" (grey), "connected" (green), "error" (red).
+- [ ] Status updates automatically after each API response.
+- [ ] The badge is visible at all times, not hidden behind a settings menu.
+
+---
+
+## Epic 2 — Player Search
+
+### US-003 · Search for a player by name
+**Priority:** P0
+
+> As a casual fan, I want to search for any NBA player by name, so that I can quickly find someone I'm thinking of without knowing their exact full name.
+
+**Acceptance criteria:**
+- [ ] Typing a partial name (e.g. "curry") and pressing Enter or clicking Search returns matching players.
+- [ ] Results show: full name, position, height, weight, and team.
+- [ ] A loading spinner appears while the request is in flight.
+- [ ] If no matches are found, a clear empty state is shown (not a blank table).
+
+**Edge cases:**
+- Very common names (e.g. "James") return multiple players — all are listed.
+- Retired players with no current team show "—" in the team column.
+
+---
+
+### US-004 · Browse paginated search results
+**Priority:** P0
+
+> As a casual fan, I want to page through search results, so that I can find the right player when there are many matches.
+
+**Acceptance criteria:**
+- [ ] Results are shown 25 at a time.
+- [ ] "Next" and "Previous" buttons navigate between pages.
+- [ ] "Previous" is disabled on the first page.
+- [ ] "Next" is disabled when there are no more results.
+
+---
+
+### US-005 · Navigate to a player's profile
+**Priority:** P0
+
+> As a fan, I want to click on a player's name in search results, so that I can open their profile and explore their statistics.
+
+**Acceptance criteria:**
+- [ ] Clicking a player name or "Stats →" link opens the player detail view.
+- [ ] The detail view shows the player's name prominently.
+- [ ] A back button returns the user to the search results without re-running the search.
+
+---
+
+## Epic 3 — Player Profile & Season Averages
+
+### US-006 · View season averages for a player
+**Priority:** P0
+
+> As an amateur analyst, I want to see a player's season averages for any season in NBA history, so that I can understand their performance across their career.
+
+**Acceptance criteria:**
+- [ ] A season selector lists every NBA season from 1946–47 to the current season, newest first.
+- [ ] Clicking "Load" fetches and displays averages for the selected season.
+- [ ] Stats displayed: PTS/G, REB/G, AST/G, STL/G, BLK/G, TO/G, FG%, 3PT%, FT%, MIN/G, GP.
+- [ ] Each stat is shown in a clearly labelled card.
+
+**Edge cases:**
+- If the player has no data for the selected season (e.g. they were not active), a "No data available" message is shown — not an error.
+- FG%, 3PT%, and FT% are displayed as percentages (e.g. 47.3%), not decimals (e.g. 0.473).
+
+---
+
+### US-007 · View per-game stats for a player in a season
+**Priority:** P0
+
+> As an amateur analyst, I want to see individual game logs for a player in a selected season, so that I can spot performance trends and outlier games.
+
+**Acceptance criteria:**
+- [ ] Game log shows the 10 most recent games for the selected season.
+- [ ] Columns: date, PTS, REB, AST, STL, BLK, FG%, 3PT%, MIN, +/-.
+- [ ] Dates are formatted as YYYY-MM-DD.
+- [ ] The game log loads at the same time as season averages (parallel fetch).
+
+**Edge cases:**
+- If fewer than 10 games exist for the season, all available games are shown.
+- If no game data exists, a "No game log available" message is shown.
+
+---
+
+### US-008 · Switch between seasons on a player profile
+**Priority:** P1
+
+> As an analyst, I want to change the selected season on a player's profile and reload their stats, so that I can compare performance across different years.
+
+**Acceptance criteria:**
+- [ ] Changing the season selector and clicking "Load" replaces the stats with the new season's data.
+- [ ] A loading state is shown while the new data loads.
+- [ ] The previous season's data is cleared immediately when the new request begins.
+
+---
+
+## Epic 4 — Season Averages Tab
+
+### US-009 · Look up season averages by name and season
+**Priority:** P0
+
+> As a sports journalist, I want to type a player's name, pick a season, and instantly see their averages, so that I can fact-check a claim quickly without navigating through a profile.
+
+**Acceptance criteria:**
+- [ ] Name input and season selector are shown together on the Season Stats tab.
+- [ ] Pressing Search or Enter triggers the lookup.
+- [ ] If one player matches, their stats load immediately.
+- [ ] Stats are displayed in a labelled stat-card grid.
+- [ ] The season label (e.g. "2024–25") is shown alongside the player's name.
+
+---
+
+### US-010 · Disambiguate between players with similar names
+**Priority:** P0
+
+> As a journalist, I want to choose between multiple players who share a name, so that I get the right person's stats and not a different player.
+
+**Acceptance criteria:**
+- [ ] If the search returns 2 or more players, a picker listing all matching names appears before stats are loaded.
+- [ ] Clicking a name from the picker immediately fetches that player's stats for the selected season.
+- [ ] The picker disappears once a selection is made.
+
+---
+
+## Epic 5 — Games Browser
+
+### US-011 · Browse game results by season
+**Priority:** P0
+
+> As a fan, I want to look up game results from any NBA season, so that I can revisit historical matchups and scores.
+
+**Acceptance criteria:**
+- [ ] Season selector covers all NBA seasons from 1946–47 to present.
+- [ ] Clicking Search fetches and displays games for the selected season.
+- [ ] Each row shows: date, matchup (away @ home), final score, season, and game type.
+- [ ] 25 games are shown per page with next/previous navigation.
+
+**Edge cases:**
+- Games that have not yet been played show "—" in the score column instead of 0–0.
+- Very old seasons (pre-1970s) may have limited data; this is expected behaviour and not surfaced as an error.
+
+---
+
+### US-012 · Filter games by playoff or regular season
+**Priority:** P0
+
+> As a fan, I want to filter games to show only playoff games, so that I can focus on the postseason results I care about.
+
+**Acceptance criteria:**
+- [ ] A dropdown allows the user to choose "Regular season" or "Playoffs".
+- [ ] Playoff games are visually tagged with a distinct label.
+- [ ] Switching between types and re-searching returns only the correct game type.
+
+---
+
+### US-013 · Filter games by team
+**Priority:** P1
+
+> As a fan, I want to type a team name to filter the results, so that I only see games involving my favourite team.
+
+**Acceptance criteria:**
+- [ ] A text field accepts a team name or abbreviation (e.g. "Lakers", "LAL").
+- [ ] Filtering is applied client-side against the fetched page of results.
+- [ ] If no games match the filter, an empty state message is shown.
+
+**Edge cases:**
+- Matching is case-insensitive.
+- Partial matches work (e.g. "lak" matches "Los Angeles Lakers").
+
+---
+
+### US-014 · Page through game results
+**Priority:** P0
+
+> As a user, I want to navigate through multiple pages of game results, so that I can browse beyond the first 25 entries.
+
+**Acceptance criteria:**
+- [ ] "Next" loads the next page of results.
+- [ ] "Previous" returns to the prior page.
+- [ ] Buttons are disabled appropriately at the start and end of the result set.
+- [ ] Page position is preserved when navigating back from a game detail (if applicable in future).
+
+---
+
+## Epic 6 — Error Handling & Edge Cases
+
+### US-015 · See a clear error when the API is unreachable
+**Priority:** P1
+
+> As a user, I want to see a helpful error message when the API fails, so that I know whether the issue is with my key, my connection, or the service itself.
+
+**Acceptance criteria:**
+- [ ] A 401 response updates the status badge to "error" and suggests checking the key.
+- [ ] A 429 (rate limit) response shows a message like "Too many requests — wait a moment and try again."
+- [ ] Network errors (no connection) show "Could not reach the API. Check your connection."
+- [ ] Errors are shown inline near the relevant section, not as page-level alerts.
+
+---
+
+### US-016 · Recover gracefully from an empty response
+**Priority:** P1
+
+> As a user, I want to see a clear empty state rather than a blank screen when a search returns no results, so that I know the app is working and I simply need to refine my query.
+
+**Acceptance criteria:**
+- [ ] Empty player search shows: an icon and "No players found. Try a different name."
+- [ ] Empty season averages show: "No averages found for [name] in [season]."
+- [ ] Empty game results show: "No games found. Try adjusting your season or filters."
+
+---
+
+## Story Map Summary
+
+| Epic | Stories | Priority |
+|---|---|---|
+| API Key Setup | US-001, US-002 | P0 |
+| Player Search | US-003, US-004, US-005 | P0 |
+| Player Profile | US-006, US-007, US-008 | P0, P1 |
+| Season Averages Tab | US-009, US-010 | P0 |
+| Games Browser | US-011, US-012, US-013, US-014 | P0, P1 |
+| Error Handling | US-015, US-016 | P1 |
+
+---
+
+## Definition of Done
+
+A story is considered done when:
+
+1. All acceptance criteria are met and verified.
+2. Edge cases have been tested manually.
+3. The feature works on Chrome, Firefox, and Safari (current versions).
+4. The feature renders correctly on both mobile (375 px) and desktop (1280 px+) viewports.
+5. No console errors are introduced.
+6. Error states and empty states are implemented alongside the happy path.

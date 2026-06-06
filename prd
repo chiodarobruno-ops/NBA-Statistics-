@@ -1,0 +1,236 @@
+# Product Requirements Document — NBA Stats Explorer
+
+**Product Name:** NBA Stats Explorer  
+**Version:** 1.0  
+**Date:** June 2026  
+**Status:** Draft  
+**Owner:** Product Team  
+
+---
+
+## 1. Overview
+
+### 1.1 Purpose
+
+NBA Stats Explorer is a web application that gives basketball fans, analysts, and developers instant access to the complete historical record of NBA statistics — every player, every game, and every season from 1946 to the present — powered by the balldontlie.io API.
+
+### 1.2 Problem Statement
+
+Basketball enthusiasts and analysts currently have no single, easy-to-use interface that aggregates the full depth of NBA history. Official sources are fragmented, paywalled, or require technical knowledge to query. There is a need for a clean, accessible tool that surfaces player statistics, season averages, and game results without friction.
+
+### 1.3 Goals
+
+- Provide access to every NBA player ever recorded, active or retired.
+- Surface per-game and season-average statistics for any player in any season.
+- Display every game result from 1946–47 to the current season.
+- Deliver a fast, intuitive interface requiring zero setup beyond an API key.
+
+### 1.4 Non-Goals
+
+- The app will not support user accounts, saved searches, or personalisation in v1.
+- The app will not cover leagues other than NBA (WNBA, G-League, international) in v1.
+- The app will not stream live play-by-play data in v1.
+- The app will not provide betting odds or fantasy integrations in v1.
+
+---
+
+## 2. Target Users
+
+| Persona | Description | Primary Need |
+|---|---|---|
+| Casual Fan | Follows the NBA recreationally | Quick lookup of favourite players and scores |
+| Amateur Analyst | Creates content, charts, or comparisons | Season averages and historical game data |
+| Developer / Data Scientist | Builds tools or models with NBA data | Reliable data access without direct API wrangling |
+| Sports Journalist | Researches articles and commentary | Fast fact-checking across decades of history |
+
+---
+
+## 3. Features and Requirements
+
+### 3.1 API Key Management
+
+**Priority:** P0 — Must Have
+
+- The user must be able to enter their balldontlie.io API key into a persistent input field.
+- The app must display a connection status indicator (connected / error / not set).
+- The key must be used as the `Authorization` header on every API request.
+- The key must not be logged or transmitted to any third-party service.
+- If no key is present and a data request is made, the app must surface a clear prompt to add one.
+
+### 3.2 Player Search
+
+**Priority:** P0 — Must Have
+
+- Users can search for any player by name (full or partial).
+- Results display: player name, position, height, weight, current or last team.
+- Results are paginated with next/previous controls using cursor-based pagination.
+- Clicking a player opens their detail view.
+- Search is triggered by button click or pressing Enter.
+
+**Acceptance criteria:**
+- Returns results for active and retired players.
+- Handles partial name matches (e.g. "Bron" returns LeBron James).
+- Shows a clear empty state when no results are found.
+- Shows a loading indicator while the request is in flight.
+
+### 3.3 Player Detail View
+
+**Priority:** P0 — Must Have
+
+- From a player's profile, the user can select any season from 1946 to the current year.
+- The app fetches and displays season averages: points, rebounds, assists, steals, blocks, turnovers, FG%, 3PT%, FT%, minutes per game, and games played.
+- The app also fetches and displays the 10 most recent game logs for that season, showing the same stat columns plus +/-.
+- A back button returns the user to the search results without losing their query.
+
+**Acceptance criteria:**
+- Season selector defaults to the most recent season.
+- Displays a "no data" message if the player has no averages for the selected season.
+- Game log dates are formatted as YYYY-MM-DD.
+
+### 3.4 Season Averages Tab
+
+**Priority:** P0 — Must Have
+
+- Dedicated tab where users type a player name and select a season.
+- If multiple players match the name, a picker is shown to disambiguate.
+- If exactly one match, stats load immediately.
+- Stats are displayed in a stat-card grid format.
+
+**Acceptance criteria:**
+- Picker appears when 2 or more players share a similar name.
+- Single-match queries bypass the picker entirely.
+- Displays season label (e.g. 2024–25) alongside the player name.
+
+### 3.5 Games Browser
+
+**Priority:** P0 — Must Have
+
+- Users can browse game results filtered by season (1946–present), game type (regular season or playoffs), and optional team name.
+- Results display: date, matchup, final score, season, game type.
+- Results are paginated.
+
+**Acceptance criteria:**
+- Season selector covers every NBA season since 1946.
+- Team filter is client-side string matching on team name and abbreviation.
+- Playoff games are visually distinguished from regular season.
+- Score is displayed only when the game has been played (not for scheduled future games).
+
+---
+
+## 4. Technical Requirements
+
+### 4.1 API Integration
+
+- Base URL: `https://api.balldontlie.io/nba/v1`
+- Authentication: `Authorization: <API_KEY>` header on every request.
+- Endpoints used:
+  - `GET /players` — player search with `search` and `per_page` parameters.
+  - `GET /season_averages` — season averages by `season` and `player_ids[]`.
+  - `GET /stats` — per-game stats by `seasons[]` and `player_ids[]`.
+  - `GET /games` — game results by `seasons[]`, `postseason`, and `per_page`.
+- All pagination uses cursor-based navigation (`cursor` param, `meta.next_cursor` in response).
+
+### 4.2 Rate Limiting
+
+- The free tier of balldontlie.io enforces rate limits (approximately 30 requests per minute).
+- The app must surface a user-friendly error if a 429 response is received.
+- No automatic retry logic in v1; the user is prompted to wait and try again.
+
+### 4.3 Error Handling
+
+- Network errors display a dismissible inline error message.
+- 401 Unauthorized updates the API status badge to "error" and prompts key re-entry.
+- 404 / empty results display a contextual empty state — not a generic error.
+
+### 4.4 Performance
+
+- All data requests happen client-side; there is no server component.
+- Each search or filter action issues at most 2 concurrent API calls.
+- Loading indicators appear within 100 ms of a user action.
+
+### 4.5 Compatibility
+
+- Must render correctly in current versions of Chrome, Firefox, Safari, and Edge.
+- Must be functional on viewport widths from 375 px (mobile) to 1440 px (desktop).
+
+---
+
+## 5. Data Model
+
+### Player object (from API)
+```
+id, first_name, last_name, position, height, weight, jersey_number, team { id, full_name, abbreviation }
+```
+
+### Season average object (from API)
+```
+player_id, season, games_played, min, pts, reb, ast, stl, blk, turnover,
+fg_pct, fg3_pct, ft_pct
+```
+
+### Per-game stat object (from API)
+```
+player { id, first_name, last_name }, game { id, date, season },
+team { abbreviation }, min, pts, reb, ast, stl, blk, turnover,
+fg_pct, fg3_pct, ft_pct, plus_minus
+```
+
+### Game object (from API)
+```
+id, date, season, postseason, status,
+home_team { full_name, abbreviation }, home_team_score,
+visitor_team { full_name, abbreviation }, visitor_team_score
+```
+
+---
+
+## 6. Out-of-Scope for v1
+
+- User authentication and saved favourites.
+- Advanced filtering (date ranges, opponent, home/away).
+- Statistical leaderboards and rankings.
+- Head-to-head player comparisons.
+- Export to CSV or clipboard.
+- Embedded charts or visualisations.
+- Push notifications or live score updates.
+
+---
+
+## 7. Success Metrics
+
+| Metric | Target (30 days post-launch) |
+|---|---|
+| Players successfully searched | > 500 unique queries |
+| Season average lookups | > 1,000 |
+| Games browsed | > 2,000 page loads |
+| API error rate | < 5% of requests |
+| Task completion rate (find a player → view stats) | > 80% |
+
+---
+
+## 8. Dependencies and Risks
+
+| Risk | Likelihood | Impact | Mitigation |
+|---|---|---|---|
+| balldontlie.io API downtime | Low | High | Surface clear error; add link to API status page |
+| Free-tier rate limit hit during peak use | Medium | Medium | Show friendly "slow down" message with countdown |
+| Incomplete historical data (pre-1980s) | High | Low | Add in-app note that data coverage varies by era |
+| API schema change breaking the app | Low | High | Pin to `/nba/v1`; monitor API changelog |
+
+---
+
+## 9. Open Questions
+
+1. Should the season averages tab support multi-player comparison in v1.1?
+2. What is the desired behaviour when the API key expires mid-session?
+3. Should the games browser support date-range filtering in addition to season filtering?
+4. Is there appetite for a "today's games" quick view on the landing state?
+
+---
+
+## 10. Revision History
+
+| Version | Date | Author | Notes |
+|---|---|---|---|
+| 0.1 | June 2026 | Product Team | Initial draft |
+| 1.0 | June 2026 | Product Team | First release version |
